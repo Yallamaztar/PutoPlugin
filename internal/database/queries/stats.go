@@ -1,0 +1,9 @@
+package queries
+
+const (
+	CreatePlayerStats = `INSERT INTO player_stats (player_id) VALUES (?);`
+	GetPlayerStats    = `SELECT player_id, total_gambles, total_wagered, total_won, total_lost, wins, losses, last_gamble FROM player_stats WHERE player_id = ?;`
+	UpdateStatsWin    = `UPDATE player_stats SET total_gambles = total_gambles + 1, total_wagered = total_wagered + ?, total_won = total_won + ?, wins = wins + 1, last_gamble = CURRENT_TIMESTAMP WHERE player_id = ?;`
+	UpdateStatsLoss   = `UPDATE player_stats SET total_gambles = total_gambles + 1, total_wagered = total_wagered + ?, total_lost = total_lost + ?, losses = losses + 1, last_gamble = CURRENT_TIMESTAMP WHERE player_id = ?;`
+	ResetPlayerStats  = `UPDATE player_stats SET total_gambles = 0, total_wagered = 0, total_won = 0, total_lost = 0, wins = 0, losses = 0, last_gamble = NULL WHERE player_id = ?;`
+)

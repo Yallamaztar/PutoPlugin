@@ -1,0 +1,73 @@
+package wallet
+
+import (
+	"database/sql"
+	"errors"
+	"plugin/internal/database/queries"
+	"sync"
+)
+
+type WalletRepository interface {
+	Create(playerID int, initialBalance int) error
+	GetBalance(playerID int) (int, error)
+	SetBalance(playerID int, amount int) error
+	Deposit(playerID int, amount int) error
+	Withdraw(playerID int, amount int) error
+	Delete(playerID int) error
+	Exists(playerID int) (bool, error)
+}
+
+type repository struct {
+	db *sql.DB
+	mu sync.Mutex
+}
+
+func New(db *sql.DB) WalletRepository {
+	return &repository{db: db}
+}
+
+func (r *repository) Create(playerID int, initialBalance int) error {
+	_, err := r.db.Exec(queries.CreateWallet, playerID, initialBalance)
+	return err
+}
+
+func (r *repository) GetBalance(playerID int) (int, error) {
+	var balance int
+	err := r.db.QueryRow(queries.GetWalletBalanceByPlayerID, playerID).Scan(&balance)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	return balance, nil
+}
+
+func (r *repository) SetBalance(playerID int, amount int) error {
+	_, err := r.db.Exec(queries.SetBankBalance, amount, playerID)
+	return err
+}
+
+func (r *repository) Deposit(playerID int, amount int) error {
+	_, err := r.db.Exec(queries.DepositToWallet, amount, playerID)
+	return err
+}
+
+func (r *repository) Withdraw(playerID int, amount int) error {
+	_, err := r.db.Exec(queries.WithdrawFromWallet, amount, playerID)
+	return err
+}
+
+func (r *repository) Delete(playerID int) error {
+	_, err := r.db.Exec(queries.DeleteWallet, playerID)
+	return err
+}
+
+func (r *repository) Exists(playerID int) (bool, error) {
+	var count int
+	err := r.db.QueryRow(queries.WalletExists, playerID).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
