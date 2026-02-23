@@ -8,53 +8,60 @@ import (
 	"sync"
 )
 
-type Level uint8
-
 type Handler func(
 	clientNum uint8,
 	playerID int,
 	playerName string,
 	xuid string,
-	level Level,
+	level int,
 	args []string,
 )
 
 type Command struct {
 	Name     string
 	Aliases  []string
-	MinLevel Level
+	MinLevel int
 	Help     string
 	MinArgs  uint8
 	Handler  Handler
 }
 
-type commands map[string]Command
+type commands map[string]*Command
 type clients map[string]uint8
 
 type Register struct {
 	commands commands
 	clients  clients
-	rc       *rcon.RCON
-	cfg      config.Config
-	mu       sync.RWMutex
+
+	rc  *rcon.RCON
+	cfg config.Config
+
+	mu sync.RWMutex
 }
 
 func New(cfg config.Config, rc *rcon.RCON) *Register {
 	return &Register{
 		commands: make(commands),
 		clients:  make(clients),
-		rc:       rc,
-		cfg:      cfg,
+
+		rc:  rc,
+		cfg: cfg,
+
+		mu: sync.RWMutex{},
 	}
 }
-
 func (r *Register) RegisterCommand(cmd Command) {
+	if cmd.Handler == nil {
+		panic("command " + cmd.Name + " registered with nil handler")
+	}
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.commands[strings.ToLower(cmd.Name)] = cmd
-	for _, alias := range cmd.Aliases {
-		r.commands[strings.ToLower(alias)] = cmd
+	c := cmd
+	r.commands[strings.ToLower(c.Name)] = &c
+	for _, alias := range c.Aliases {
+		r.commands[strings.ToLower(alias)] = &c
 	}
 }
 
@@ -63,7 +70,7 @@ func (r *Register) Execute(
 	playerID int,
 	playerName string,
 	xuid string,
-	level Level,
+	level int,
 	command string,
 	args []string,
 ) {
@@ -72,7 +79,11 @@ func (r *Register) Execute(
 	r.mu.RUnlock()
 
 	if !ok {
-		return // unknown command
+		return
+	}
+
+	if cmd.Handler == nil {
+		return
 	}
 
 	if !r.hasPermission(level, cmd.MinLevel) {
@@ -112,7 +123,7 @@ func (r *Register) RemoveClientNum(xuid string) {
 	delete(r.clients, xuid)
 }
 
-func (r *Register) hasPermission(level, required Level) bool {
+func (r *Register) hasPermission(level, required int) bool {
 	return level >= required
 }
 

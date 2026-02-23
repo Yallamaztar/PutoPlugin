@@ -17,9 +17,10 @@ type Config struct {
 }
 
 type Server struct {
-	Host     string `yaml:"host"`
-	Password string `yaml:"password"`
-	LogPath  string `yaml:"log_path"`
+	Host          string `yaml:"host"`
+	Password      string `yaml:"password"`
+	LogPath       string `yaml:"log_path"`
+	CommandPrefix string `yaml:"command_prefix"`
 }
 
 type Gambling struct {
@@ -59,9 +60,10 @@ type IW4MAdmin struct {
 func Default() *Config {
 	return &Config{
 		Gambling: Gambling{
-			Enabled:   true,
-			WinChance: 0.45,
-			Currency:  "$",
+			Enabled:     true,
+			WinChance:   0.45,
+			Currency:    "$",
+			ConsoleName: "",
 		},
 
 		Economy: Economy{
@@ -99,7 +101,10 @@ func (c *Config) Load() (*Config, error) {
 		return nil, err
 	}
 
-	cfg := &Config{}
+	// 👇 start with defaults
+	cfg := Default()
+
+	// 👇 override defaults with yaml
 	if err := yaml.Unmarshal(data, cfg); err != nil {
 		return nil, err
 	}

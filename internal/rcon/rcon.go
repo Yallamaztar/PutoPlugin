@@ -38,13 +38,13 @@ const (
 type RCON struct {
 	host     string
 	password string
-	config   config.Config
+	config   *config.Config
 
 	conn *net.UDPConn
 	mu   sync.Mutex
 }
 
-func New(host, password string, cfg config.Config) (*RCON, error) {
+func New(host, password string, cfg *config.Config) (*RCON, error) {
 	addr, err := net.ResolveUDPAddr("udp", host)
 	if err != nil {
 		return nil, errors.New("failed to resolve address")

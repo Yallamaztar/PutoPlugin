@@ -72,7 +72,7 @@ func Pay(
 		FromBalance: fromBalance - amount,
 		ToBalance:   toBalance,
 		Message: fmt.Sprintf(
-			"You paid ^6%s%d ^7to player %d",
+			"You paid %s%d to player %d",
 			cfg.Gambling.Currency,
 			amount,
 			toPlayerID,

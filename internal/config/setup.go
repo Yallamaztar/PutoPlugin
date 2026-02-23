@@ -4,14 +4,15 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"plugin/internal/logger"
 	"strings"
 )
 
-func Setup() (*Config, error) {
+func Setup(log *logger.Logger) (*Config, error) {
 	cfg := Default()
 
 	if _, err := os.Stat("config.yaml"); os.IsNotExist(err) {
-		fmt.Println("No config file found. Let's create one:")
+		log.Println("No config file found. Let's create one:")
 
 		cfg.Server = promptServers()
 		cfg.Discord = promptDiscord()
@@ -21,7 +22,7 @@ func Setup() (*Config, error) {
 			return nil, fmt.Errorf("failed to save config: %w", err)
 		}
 
-		fmt.Println("Config saved to config.yaml!")
+		log.Println("Config saved to config.yaml!")
 	}
 
 	loaded, err := cfg.Load()
@@ -42,9 +43,10 @@ func promptServers() []Server {
 		logPath := readLine(reader, "Enter server log path: ")
 
 		servers = append(servers, Server{
-			Host:     host,
-			Password: password,
-			LogPath:  logPath,
+			Host:          host,
+			Password:      password,
+			LogPath:       logPath,
+			CommandPrefix: "!",
 		})
 
 		if !yesNo(reader, "Add another server? (Y/n): ") {

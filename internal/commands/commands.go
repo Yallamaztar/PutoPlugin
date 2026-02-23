@@ -39,9 +39,9 @@ func RegisterClientCommands(
 		MinLevel: LevelUser,
 		Help:     "Usage: ^6!gamble ^7<amount>",
 		MinArgs:  1,
-		Handler: func(clientNum uint8, playerID int, playerName, xuid string, level register.Level, args []string) {
+		Handler: func(clientNum uint8, playerID int, playerName, xuid string, level int, args []string) {
 			p, err := player.GetPlayerByXUID(xuid)
-			if err != nil {
+			if err != nil || p == nil {
 				rcon.Tell(clientNum, "an ^1error ^7occurred, please ^1try again ^7later")
 				return
 			}
