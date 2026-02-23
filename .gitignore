@@ -2,3 +2,4 @@
 *.yaml
 *.md
 *.exe
+internal/commands/game
