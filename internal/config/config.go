@@ -32,10 +32,10 @@ type Gambling struct {
 
 type Economy struct {
 	Enabled         bool `yaml:"enabled"`
-	KillReward      uint `yaml:"kill_reward"`
-	JoinReward      uint `yaml:"join_reward"`
-	FirstTimeReward uint `yaml:"first_time_reward"`
-	DeathPenalty    uint `yaml:"death_penalty"`
+	KillReward      int  `yaml:"kill_reward"`
+	JoinReward      int  `yaml:"join_reward"`
+	FirstTimeReward int  `yaml:"first_time_reward"`
+	DeathPenalty    int  `yaml:"death_penalty"`
 }
 
 type Levels struct {
