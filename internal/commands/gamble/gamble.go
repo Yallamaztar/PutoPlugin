@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 type Result struct {
 	Won     bool
 	Amount  int
@@ -45,10 +47,7 @@ func Gamble(
 		return nil, errors.New("You dont have enough money")
 	}
 
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-	won := rng.Float64() < cfg.Gambling.WinChance
-
-	if won {
+	if didWin(cfg.Gambling.WinChance) {
 		if err := bank.Withdraw(bet); err != nil {
 			return nil, err
 		}
@@ -88,4 +87,13 @@ func Gamble(
 		Balance: balance - bet,
 		Message: fmt.Sprintf("You just lost %s%d!", cfg.Gambling.Currency, bet),
 	}, nil
+}
+
+func didWin(winChance float64) bool {
+	r1 := rng.Float64()
+	r2 := rng.Float64()
+	r3 := rng.Float64()
+
+	avg := (r1 + r2 + r3) / 3
+	return avg < winChance
 }
