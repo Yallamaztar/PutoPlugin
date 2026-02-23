@@ -3,10 +3,11 @@ package events
 import (
 	"context"
 	"fmt"
-	"log"
 	"plugin/internal/config"
+	"plugin/internal/logger"
 	"plugin/internal/rcon"
 	"plugin/internal/register"
+	"strings"
 
 	ps "plugin/internal/service/player"
 	ws "plugin/internal/service/wallet"
@@ -14,15 +15,16 @@ import (
 	"github.com/Yallamaztar/eventsv2/events"
 )
 
-func RunEventTailLoop(index int, cfg config.Config, rcon *rcon.RCON, reg *register.Register, playerService *ps.Service, walletService *ws.Service) {
+func RunEventTailLoop(index int, cfg *config.Config, rcon *rcon.RCON, reg *register.Register, playerService *ps.Service, walletService *ws.Service, log *logger.Logger) {
 	eventsCh := make(chan events.Event, 128)
-	go func() {
-		if err := events.TailFileContext(context.Background(), cfg.Server[index].LogPath, true, eventsCh); err != nil {
-			log.Fatalf("Failed to tail file: %s", cfg.Server[index].LogPath)
+	server := cfg.Server[index]
+	go func(cfg *config.Config) {
+		if err := events.TailFileContext(context.Background(), server.LogPath, false, eventsCh); err != nil {
+			log.Fatalf("Failed to tail file: %s", server)
 			return
 		}
 		close(eventsCh)
-	}()
+	}(cfg)
 
 	for e := range eventsCh {
 		if !cfg.Gambling.Enabled {
@@ -33,28 +35,37 @@ func RunEventTailLoop(index int, cfg config.Config, rcon *rcon.RCON, reg *regist
 		case *events.PlayerEvent:
 			switch event.Command {
 			case "J":
-				reg.SetClientNum(event.XUID, event.ClientNum)
+				go func() {
+					reg.SetClientNum(event.XUID, event.ClientNum)
+					guid := rcon.PlayerGUIDByClientNum(event.ClientNum)
+					if guid == "" {
+						return
+					}
 
-				guid := rcon.PlayerGUIDByClientNum(event.ClientNum)
-				if guid == "" {
-					continue
-				}
+					exists, err := playerService.ExistsByXUID(event.XUID)
+					if err != nil {
+						return
+					}
+					if exists {
+						p, err := playerService.GetPlayerByXUID(event.XUID)
+						if err != nil {
+							return
+						}
 
-				exists, err := playerService.ExistsByXUID(event.XUID)
-				if err != nil {
-					continue
-				}
+						walletService.Deposit(p.ID, int(cfg.Economy.JoinReward))
+						return
+					}
 
-				if !exists {
 					id, err := playerService.CreatePlayer(event.Name, event.XUID, guid, 0)
 					if err != nil {
-						continue
+						return
 					}
 
 					err = walletService.CreateWallet(int(id), int(cfg.Economy.FirstTimeReward))
 					if err != nil {
-						continue
+						return
 					}
+					log.Printf("Created wallet: %s (%s) | ID: %d\n", event.Name, event.XUID, id)
 
 					rcon.Tell(
 						event.ClientNum,
@@ -64,15 +75,30 @@ func RunEventTailLoop(index int, cfg config.Config, rcon *rcon.RCON, reg *regist
 							cfg.Economy.FirstTimeReward,
 						),
 					)
-				}
+				}()
+				continue
 
 			case "Q":
-				reg.RemoveClientNum(event.XUID)
+				go reg.RemoveClientNum(event.XUID)
 
 			case "say", "sayteam":
-			}
+				if cmd, isCommand := strings.CutPrefix(event.Message, server.CommandPrefix); isCommand {
+					parts := strings.Fields(cmd)
+					if len(parts) > 0 {
+						args := []string{}
+						if len(parts) > 1 {
+							args = parts[1:]
+						}
 
-		case *events.KillEvent:
+						p, err := playerService.GetPlayerByXUID(event.XUID)
+						if err != nil || p == nil {
+							continue
+						}
+
+						go reg.Execute(event.ClientNum, p.ID, event.Name, event.XUID, p.Level, parts[0], args)
+					}
+				}
+			}
 		}
 	}
 }

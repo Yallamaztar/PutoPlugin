@@ -1,11 +1,11 @@
 package main
 
 import (
-	"log"
 	"plugin/internal/commands"
 	"plugin/internal/config"
 	"plugin/internal/database"
 	"plugin/internal/events"
+	"plugin/internal/logger"
 	"plugin/internal/rcon"
 	"plugin/internal/register"
 	"sync"
@@ -22,14 +22,23 @@ import (
 )
 
 func main() {
+	log := logger.New("main")
+
+	log.Println("Loading config.yaml")
+	cfg, err := config.Setup(log)
+	if err != nil {
+		log.Fatal("config setup failed:", err)
+	}
+
 	db, err := database.Open()
 	if err != nil {
-		log.Fatal("failed to open database:", err)
+		log.Fatal("Failed to open database:", err)
 	}
 	defer db.Close()
 
+	log.Println("Starting database migrations")
 	if err := database.Migrate(db); err != nil {
-		log.Fatal("failed database migration")
+		log.Fatal("Failed database migration")
 	}
 
 	player := ps.New(pr.New(db))
@@ -37,31 +46,29 @@ func main() {
 	bank := bs.New(br.New(db))
 	playerStats := ss.NewPlayerStats(sr.NewPlayerStats(db))
 	gambleStats := ss.NewGamblingStats(sr.NewGamblingStats(db))
-
-	log.Println("Loading config.yaml")
-	cfg, err := config.Setup()
-	if err != nil {
-		log.Fatal("config setup failed:", err)
-	}
+	log.Println("Database migrations done!")
 
 	var wg sync.WaitGroup
 	for i, s := range cfg.Server {
-		log.Printf("Connecting to RCON on %s\n", s.Host)
-		rc, err := rcon.New(s.Host, s.Password, *cfg)
+		serverLog := logger.New(cfg.Server[i].Host)
+		serverLog.Println("Connecting to RCON on " + s.Host)
+		rc, err := rcon.New(s.Host, s.Password, cfg)
 		if err != nil {
+			serverLog.Println("Couldnt connect to RCON on " + s.Host)
 			continue
 		}
 
 		reg := register.New(*cfg, rc)
 		commands.RegisterClientCommands(*cfg, rc, reg, player, wallet, bank, playerStats, gambleStats)
 
-		log.Println("Starting Plugin")
+		serverLog.Println("Starting Plugin")
 		wg.Add(1)
-		go func(index int, rc *rcon.RCON) {
+		go func(rc *rcon.RCON, log *logger.Logger) {
 			defer wg.Done()
 			defer rc.Close()
-			events.RunEventTailLoop(index, *cfg, rc, reg, player, wallet)
-		}(i, rc)
+
+			events.RunEventTailLoop(i, cfg, rc, reg, player, wallet, log)
+		}(rc, serverLog)
 	}
 
 	wg.Wait()
