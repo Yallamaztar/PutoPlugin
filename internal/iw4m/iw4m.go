@@ -38,7 +38,7 @@ func (w *IW4MWrapper) do(endpoint string) (*http.Response, error) {
 		return nil, err
 	}
 	req.Header.Set("Cookie", w.cookie)
-	req.Header.Set("User-Agent", "gambling-bot/1.0")
+	req.Header.Set("User-Agent", "plutoplugin-bot/1.0") // for shits n gigles
 
 	return w.client.Do(req)
 }
@@ -57,13 +57,18 @@ func (w *IW4MWrapper) SetLevel(player, level string) error {
 	return w.ExecuteCommand(fmt.Sprintf("!sl %s %s", player, level))
 }
 
-func (w *IW4MWrapper) BanPlayer(player, reason string) error {
-	return w.ExecuteCommand(fmt.Sprintf("!ban %s %s", player, reason))
+func (w *IW4MWrapper) Ban(clientID int, reason string) error {
+	return w.ExecuteCommand(fmt.Sprintf("!ban @%d %s", clientID, reason))
+}
+
+func (w *IW4MWrapper) Unban(clientID int, reason string) error {
+	return w.ExecuteCommand(fmt.Sprintf("!unban @%d %s", clientID, reason))
 }
 
 type findClient struct {
 	TotalFoundClients int `json:"totalFoundClients"`
-	Clients           []struct {
+
+	Clients []struct {
 		ClientID int    `json:"clientId"`
 		XUID     string `json:"xuid"`
 		Name     string `json:"name"`
