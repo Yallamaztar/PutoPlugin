@@ -7,4 +7,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/Yallamaztar/eventsv2 v0.0.0-20260220113833-fd7904375a26 // indirect
+require github.com/Yallamaztar/eventsv2 v0.0.0-20260223095456-86fb12f80249
