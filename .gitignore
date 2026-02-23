@@ -1,6 +1,5 @@
 *.db*
 *.yaml
-*.md
 *.exe
 internal/commands/game
 t6/
