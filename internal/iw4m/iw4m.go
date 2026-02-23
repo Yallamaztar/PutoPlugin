@@ -19,15 +19,6 @@ type IW4MWrapper struct {
 	client *http.Client
 }
 
-type findClient struct {
-	TotalFoundClients int `json:"totalFoundClients"`
-	Clients           []struct {
-		ClientID int    `json:"clientId"`
-		XUID     string `json:"xuid"`
-		Name     string `json:"name"`
-	} `json:"clients"`
-}
-
 func New(config *config.Config) *IW4MWrapper {
 	return &IW4MWrapper{
 		host:     config.IW4MAdmin.Host,
@@ -70,6 +61,15 @@ func (w *IW4MWrapper) BanPlayer(player, reason string) error {
 	return w.ExecuteCommand(fmt.Sprintf("!ban %s %s", player, reason))
 }
 
+type findClient struct {
+	TotalFoundClients int `json:"totalFoundClients"`
+	Clients           []struct {
+		ClientID int    `json:"clientId"`
+		XUID     string `json:"xuid"`
+		Name     string `json:"name"`
+	} `json:"clients"`
+}
+
 func (w *IW4MWrapper) ClientIDFromGUID(guid string) *int {
 	endpoint := fmt.Sprintf(
 		"/api/client/find?name=&guid=%s&count=10&offset=0&direction=0",
@@ -96,4 +96,41 @@ func (w *IW4MWrapper) ClientIDFromGUID(guid string) *int {
 	}
 
 	return &client.Clients[0].ClientID
+}
+
+type stats struct {
+	Name               string
+	Ranking            int
+	Kills              int
+	Deaths             int
+	Performance        float64
+	LastPlayed         string
+	TotalSecondsPlayed int
+	ServerName         string
+	ServerGame         string
+}
+
+func (w *IW4MWrapper) Stats(clientID, index int) (*stats, error) {
+	endpoint := fmt.Sprintf("/api/stats/%d", clientID)
+
+	res, err := w.do(endpoint)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+
+	var statList []stats
+	if err := json.NewDecoder(res.Body).Decode(&statList); err != nil {
+		return nil, err
+	}
+
+	if len(statList) == 0 {
+		return nil, fmt.Errorf("no stats found for clientID %d", clientID)
+	}
+
+	return &statList[index], nil
 }
