@@ -41,12 +41,16 @@ func promptServers() []Server {
 		host := readLine(reader, "Enter RCON host (IP:Port): ")
 		password := readLine(reader, "Enter RCON password: ")
 		logPath := readLine(reader, "Enter server log path: ")
+		prefix := readLine(reader, "Enter command prefix (default: !): ")
+		if strings.TrimSpace(prefix) == "" {
+			prefix = "!"
+		}
 
 		servers = append(servers, Server{
 			Host:          host,
 			Password:      password,
 			LogPath:       logPath,
-			CommandPrefix: "!",
+			CommandPrefix: prefix,
 		})
 
 		if !yesNo(reader, "Add another server? (Y/n): ") {
