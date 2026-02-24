@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"plugin/internal/commands"
 	"plugin/internal/config"
 	"plugin/internal/database"
@@ -23,7 +24,7 @@ import (
 )
 
 func main() {
-	log := logger.New("main")
+	log := logger.New("main", "pp_main_log.log")
 
 	log.Println("Loading config.yaml")
 	cfg, err := config.Setup(log)
@@ -58,8 +59,8 @@ func main() {
 
 	var wg sync.WaitGroup
 	for i, s := range cfg.Server {
-		serverLog := logger.New(cfg.Server[i].Host)
-		serverLog.Println("Connecting RCON on " + s.Host)
+		serverLog := logger.New(cfg.Server[i].Host, fmt.Sprintf("pp_server_log_%d.log", i))
+		serverLog.Println("Connecting RCON")
 		rc, err := rcon.New(s.Host, s.Password, cfg)
 		if err != nil {
 			serverLog.Println("Couldnt connect to RCON")
@@ -69,12 +70,11 @@ func main() {
 		reg := register.New(*cfg, rc, player)
 		commands.RegisterClientCommands(*cfg, rc, reg, player, wallet, bank, playerStats, gambleStats, walletStats)
 
-		serverLog.Println("PlutoPlugin started")
 		wg.Add(1)
 		go func(rc *rcon.RCON, log *logger.Logger) {
 			defer wg.Done()
 			defer rc.Close()
-
+			serverLog.Println("Starting event tailer")
 			events.RunEventTailLoop(i, cfg, rc, reg, iw, player, wallet, walletStats, log)
 		}(rc, serverLog)
 	}
