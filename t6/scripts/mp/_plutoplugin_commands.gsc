@@ -498,3 +498,25 @@ bunnyhop(args) {
         }
     }
 }
+
+jumpheight(args) {
+    if (args.size < 3) return;
+
+    origin = findPlayerByClientNum(args[0]);
+    target = findPlayerByClientNum(args[1]);
+
+    if (!scripts\mp\_plutoplugin_utils::isValidAndAlive(target)) {
+        origin IPrintLnBold("player ^6" + args[1] + "^7 not alive or found");
+        return;
+    }
+
+    height = float(args[2]);
+    target SetClientDvar("sv_cheats", 1);
+    target SetClientDvar("jump_height", height);
+    target SetClientDvar("sv_cheats", 0);
+
+    origin IPrintLnBold("set ^6" + target.name + "^7 jump height to ^6" + height);
+    if origin.guid != target.guid {
+        target IPrintLnBold("^6" + origin.name + "^7 set your jump height to ^6" + height);
+    }
+}
