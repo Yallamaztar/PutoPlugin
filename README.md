@@ -52,6 +52,7 @@ It aims to provide a flexible foundation for economy systems, administrative too
 
 ### TODO:
 - Add GSC integrations
+- Add better logging
 - Finish all command implementations
 - Improve event handling
 - Documentation & examples

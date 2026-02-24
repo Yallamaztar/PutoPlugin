@@ -1,5 +1,7 @@
 *.db*
 *.yaml
 *.exe
+*.log
 internal/commands/game
 t6/
+
