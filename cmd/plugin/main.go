@@ -7,6 +7,7 @@ import (
 	"plugin/internal/commands"
 	"plugin/internal/config"
 	"plugin/internal/database"
+	"plugin/internal/discord/webhook"
 	"plugin/internal/events"
 	"plugin/internal/iw4m"
 	"plugin/internal/logger"
@@ -64,8 +65,7 @@ func asciiArt() {
 	}
 
 	fmt.Println("\n  Made By \033[38;2;180;100;255m@budiworld\033[0m | https://\033[38;2;180;100;255mgithub.com\033[0m/Yallamaztar/\033[38;2;180;100;255mPlutoPlugin\033[0m")
-	fmt.Println("  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	println()
+	fmt.Print("  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n")
 }
 func main() {
 	asciiArt()
@@ -97,6 +97,15 @@ func main() {
 	walletStats := ss.NewWalletStats(sr.NewWalletStats(db))
 	log.Println("Database migrations done!")
 
+	var wh *webhook.Webhook
+	if cfg.Discord.Enabled {
+		if cfg.Discord.WebhookLink == "" {
+			log.Errorln("Your discord webhook link is empty, please create one and add it to the config")
+		}
+
+		wh = webhook.New(cfg.Discord.WebhookLink)
+	}
+
 	var iw *iw4m.IW4MWrapper
 	if cfg.IW4MAdmin.Enabled {
 		log.Println("Starting IW4M-Admin integration")
@@ -122,15 +131,15 @@ func main() {
 
 		serverLog.Println("Testing GSC connection")
 		if err = rc.TestConnection(); err != nil {
-			serverLog.Fatal(err)
-			serverLog.Infoln("Make sure you have the necessary GSC scripts in your server scripts/ dir")
+			serverLog.Warnln(err)
+			serverLog.Infoln("Make sure you have the necessary GSC scripts in your server /storage/t6/scripts/ dir")
 			continue
 		}
 		serverLog.Println("Successfully verified GSC connection")
 
 		serverLog.Println("Registering commands")
 		reg := register.New(*cfg, rc, player, serverLog)
-		commands.RegisterClientCommands(*cfg, rc, reg, player, wallet, bank, playerStats, gambleStats, walletStats)
+		commands.RegisterClientCommands(*cfg, rc, reg, player, wallet, bank, playerStats, gambleStats, walletStats, wh)
 
 		wg.Add(1)
 		go func(rc *rcon.RCON, log *logger.Logger) {

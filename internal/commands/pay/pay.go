@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"plugin/internal/config"
+	"plugin/internal/discord/webhook"
 	"plugin/internal/service/player"
 	"plugin/internal/service/stats"
 	"plugin/internal/service/wallet"
@@ -28,16 +29,19 @@ func Pay(
 	wallet *wallet.Service,
 	walletStats *stats.WalletStatsService,
 
+	webhook *webhook.Webhook,
 ) (*Result, error) {
 	if amount <= 0 {
 		return nil, errors.New("invalid amount")
 	}
 
-	if _, err := player.GetPlayerByID(fromPlayerID); err != nil {
+	from, err := player.GetPlayerByID(fromPlayerID)
+	if err != nil {
 		return nil, errors.New("error occurred, please try again later")
 	}
 
-	if _, err := player.GetPlayerByID(toPlayerID); err != nil {
+	to, err := player.GetPlayerByID(toPlayerID)
+	if err != nil {
 		return nil, fmt.Errorf("receiver (%d) doesnt exists", toPlayerID)
 	}
 
@@ -66,6 +70,10 @@ func Pay(
 
 	walletStats.Pay(fromPlayerID, amount)
 	walletStats.Receive(toPlayerID, amount)
+
+	if cfg.Discord.Enabled {
+		webhook.PayWebhook(from.Name, to.Name, amount)
+	}
 
 	return &Result{
 		FromPlayer:  fromPlayerID,

@@ -5,6 +5,7 @@ import (
 	"plugin/internal/commands/gamble"
 	"plugin/internal/commands/pay"
 	"plugin/internal/config"
+	"plugin/internal/discord/webhook"
 	"plugin/internal/helpers"
 	"plugin/internal/rcon"
 	"plugin/internal/register"
@@ -35,6 +36,8 @@ func RegisterClientCommands(
 	playerStats *stats.PlayeStatsService,
 	gambleStats *stats.GamblingStatsService,
 	walletStats *stats.WalletStatsService,
+
+	webhook *webhook.Webhook,
 ) {
 	reg.RegisterCommand(register.Command{
 		Name:     "gamble",
@@ -55,7 +58,7 @@ func RegisterClientCommands(
 				return
 			}
 
-			res, err := gamble.Gamble(playerID, amount, cfg, player, wallet, bank, playerStats, gambleStats, walletStats)
+			res, err := gamble.Gamble(playerID, playerName, amount, cfg, player, wallet, bank, playerStats, gambleStats, walletStats, webhook)
 			if err != nil {
 				rcon.Tell(clientNum, err.Error())
 				return
@@ -102,7 +105,7 @@ func RegisterClientCommands(
 				return
 			}
 
-			res, err := pay.Pay(playerID, target.ID, amount, cfg, player, wallet, walletStats)
+			res, err := pay.Pay(playerID, target.ID, amount, cfg, player, wallet, walletStats, webhook)
 			if err != nil {
 				rcon.Tell(clientNum, err.Error())
 				return
