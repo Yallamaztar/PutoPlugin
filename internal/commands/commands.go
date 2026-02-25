@@ -35,7 +35,6 @@ func RegisterClientCommands(
 	playerStats *stats.PlayeStatsService,
 	gambleStats *stats.GamblingStatsService,
 	walletStats *stats.WalletStatsService,
-
 ) {
 	reg.RegisterCommand(register.Command{
 		Name:     "gamble",
@@ -63,7 +62,12 @@ func RegisterClientCommands(
 			}
 
 			rcon.Tell(clientNum, res.Message)
-			rcon.Say(fmt.Sprintf("%s just ^6won ^7%s%d!", playerName, cfg.Gambling.Currency, res.Amount))
+			if res.Won {
+				rcon.Say(fmt.Sprintf("%s just ^6won ^7%s%d!", playerName, cfg.Gambling.Currency, res.Amount))
+			} else {
+				rcon.Say(fmt.Sprintf("%s just ^6lost ^7%s%d!", playerName, cfg.Gambling.Currency, res.Amount))
+			}
+
 		},
 	})
 
