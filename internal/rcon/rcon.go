@@ -259,7 +259,7 @@ func (r *RCON) Say(message string) error {
 		return errors.New("message cannot be empty")
 	}
 
-	packet := r.buildPacket(fmt.Sprintf("say %s %s", r.config.Gambling.ConsoleName, message), true)
+	packet := r.buildPacket(fmt.Sprintf("say [%s]: %s", r.config.Gambling.ConsoleName, message), true)
 	return r.sendPacket(packet)
 }
 

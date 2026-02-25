@@ -63,7 +63,7 @@ func Default() *Config {
 			Enabled:     true,
 			WinChance:   0.45,
 			Currency:    "$",
-			ConsoleName: "",
+			ConsoleName: "^6PlutoPlugin^7",
 		},
 
 		Economy: Economy{
