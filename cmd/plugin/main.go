@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"plugin/internal/commands"
 	"plugin/internal/config"
 	"plugin/internal/database"
@@ -10,6 +12,7 @@ import (
 	"plugin/internal/logger"
 	"plugin/internal/rcon"
 	"plugin/internal/register"
+	"runtime"
 	"sync"
 
 	br "plugin/internal/repository/bank"
@@ -23,16 +26,53 @@ import (
 	ws "plugin/internal/service/wallet"
 )
 
-const ascii = `  ╔═╗┬  ┬ ┬┌┬┐┌─┐╔═╗┬  ┬ ┬┌─┐┬┌┐┌
-  ╠═╝│  │ │ │ │ │╠═╝│  │ ││ ┬││││
-  ╩  ┴─┘└─┘ ┴ └─┘╩  ┴─┘└─┘└─┘┴┘└┘
-`
+func clear() {
+	var cmd *exec.Cmd
 
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "cls")
+	default: // linux, darwin (macOS), etc.
+		cmd = exec.Command("clear")
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		fmt.Println("Error clearing screen:", err)
+	}
+}
+
+func asciiArt() {
+	clear()
+
+	banner := []string{
+		"   ____  _       _        ____  _             _       ",
+		"  |  _ \\| |_   _| |_ ___ |  _ \\| |_   _  __ _(_)_ __  ",
+		"  | |_) | | | | | __/ _ \\| |_) | | | | |/ _` | | '_ \\ ",
+		"  |  __/| | |_| | || (_) |  __/| | |_| | (_| | | | | |",
+		"  |_|   |_|\\__,_|\\__\\___/|_|   |_|\\__,_|\\__, |_|_| |_|",
+		"                                        |___/         ",
+	}
+
+	lines := len(banner)
+	for i, line := range banner {
+		r := 180 + (100-180)*i/lines
+		g := 100
+		b := 255 + (100-255)*i/lines
+		fmt.Printf("\033[38;2;%d;%d;%dm%s\033[0m\n", r, g, b, line)
+	}
+
+	fmt.Println("\n  Made By \033[38;2;180;100;255m@budiworld\033[0m | https://\033[38;2;180;100;255mgithub.com\033[0m/Yallamaztar/\033[38;2;180;100;255mPlutoPlugin\033[0m")
+	fmt.Println("  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	println()
+}
 func main() {
-	fmt.Print(ascii)
-	log := logger.New("PlutoPlugin", "pp_main_log.log")
+	asciiArt()
 
+	log := logger.New("PlutoPlugin", "pp_main_log.log")
 	log.Println("Loading config.yaml")
+
 	cfg, err := config.Setup(log)
 	if err != nil {
 		log.Fatal("config setup failed:", err)
@@ -61,6 +101,11 @@ func main() {
 	if cfg.IW4MAdmin.Enabled {
 		log.Println("Starting IW4M-Admin integration")
 		iw = iw4m.New(cfg)
+
+		_, err := iw.Stats(2, 0)
+		if err != nil {
+			log.Fatalf("Couldnt connect to IW4M-Admin")
+		}
 	}
 
 	var wg sync.WaitGroup
@@ -70,14 +115,15 @@ func main() {
 		serverLog.Println("Creating RCON connection")
 		rc, err := rcon.New(s.Host, s.Password, cfg, serverLog)
 		if err != nil {
-			serverLog.Errorf("Couldnt connect to RCON")
+			serverLog.Fatal("Couldnt connect to RCON")
 			continue
 		}
 		serverLog.Println("Successfully connected to RCON")
 
 		serverLog.Println("Testing GSC connection")
 		if err = rc.TestConnection(); err != nil {
-			serverLog.Errorln(err)
+			serverLog.Fatal(err)
+			serverLog.Infoln("Make sure you have the necessary GSC scripts in your server scripts/ dir")
 			continue
 		}
 		serverLog.Println("Successfully verified GSC connection")
