@@ -2,12 +2,12 @@ package helpers
 
 import "strconv"
 
-func FormatMoney(amount int64) string {
+func FormatMoney(amount int) string {
 	neg := amount < 0
 	if neg {
 		amount = -amount
 	}
-	s := strconv.FormatInt(amount, 10)
+	s := strconv.FormatInt(int64(amount), 10)
 	n := len(s)
 	if n <= 3 {
 		if neg {
