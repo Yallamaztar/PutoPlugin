@@ -15,6 +15,14 @@ type WalletRepository interface {
 	Withdraw(playerID int, amount int) error
 	Delete(playerID int) error
 	Exists(playerID int) (bool, error)
+	GetTopWallets(limit int) ([]PlayerWallet, error)
+	GetBottomWallets(limit int) ([]PlayerWallet, error)
+}
+
+type PlayerWallet struct {
+	PlayerID int
+	Balance  int
+	Name     string
 }
 
 type repository struct {
@@ -70,4 +78,35 @@ func (r *repository) Exists(playerID int) (bool, error) {
 		return false, err
 	}
 	return count > 0, nil
+}
+
+func (r *repository) GetTopWallets(limit int) ([]PlayerWallet, error) {
+	return r.getWallets(queries.GetTopWallets, limit)
+}
+
+func (r *repository) GetBottomWallets(limit int) ([]PlayerWallet, error) {
+	return r.getWallets(queries.GetBottomWallets, limit)
+}
+
+func (r *repository) getWallets(query string, limit int) ([]PlayerWallet, error) {
+	rows, err := r.db.Query(query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var wallets []PlayerWallet
+	for rows.Next() {
+		var w PlayerWallet
+		if err := rows.Scan(&w.PlayerID, &w.Balance, &w.Name); err != nil {
+			return nil, err
+		}
+		wallets = append(wallets, w)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return wallets, nil
 }

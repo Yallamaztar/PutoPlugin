@@ -56,3 +56,19 @@ func (s *Service) DeleteWallet(playerID int) error {
 func (s *Service) Exists(playerID int) (bool, error) {
 	return s.repo.Exists(playerID)
 }
+
+func (s *Service) GetTop5RichestWallets() ([]wallet.PlayerWallet, error) {
+	return s.repo.GetTopWallets(5)
+}
+
+func (s *Service) GetTop5PoorestWallets() ([]wallet.PlayerWallet, error) {
+	return s.repo.GetBottomWallets(5)
+}
+
+func (s *Service) GetTop10RichestWallets() ([]wallet.PlayerWallet, error) {
+	return s.repo.GetTopWallets(10)
+}
+
+func (s *Service) GetTop10PoorestWallets() ([]wallet.PlayerWallet, error) {
+	return s.repo.GetBottomWallets(10)
+}
