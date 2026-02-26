@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import subprocess
 import platform
 import sys, os
@@ -42,7 +43,4 @@ def main() -> None:
     build(cmd)
 
 if __name__ == "__main__":
-    main()
-
-if __name__ == '__main__':
     main()
