@@ -3,6 +3,9 @@ import subprocess
 import platform
 import sys, os
 
+# build.py
+# build the PlutoPlugin using go
+
 def get_output() -> str:
     return "plutoplugin.exe" if platform.system().lower() == "windows" else "plutoplugin"
     
