@@ -56,3 +56,4 @@ It aims to provide a flexible foundation for economy systems, administrative too
 - Finish all command implementations
 - Improve event handling
 - Documentation & examples
+- Add custom bots (maybe)
