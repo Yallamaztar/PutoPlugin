@@ -1,7 +1,9 @@
 package commands
 
 import (
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"plugin/internal/commands/gamble"
 	"plugin/internal/commands/pay"
 	"plugin/internal/config"
@@ -10,6 +12,7 @@ import (
 	"plugin/internal/rcon"
 	"plugin/internal/register"
 	"plugin/internal/service/bank"
+	"plugin/internal/service/link"
 	"plugin/internal/service/player"
 	"plugin/internal/service/stats"
 	"plugin/internal/service/wallet"
@@ -23,6 +26,23 @@ const (
 
 const unknownErr = "an ^1error ^7occurred, please ^1try again ^7later"
 
+const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+const codeLength = 6
+
+func generateCode() (string, error) {
+	code := make([]byte, codeLength)
+
+	for i := range code {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return "", err
+		}
+		code[i] = charset[n.Int64()]
+	}
+
+	return string(code), nil
+}
+
 func RegisterClientCommands(
 	cfg config.Config,
 
@@ -32,6 +52,7 @@ func RegisterClientCommands(
 	player *player.Service,
 	wallet *wallet.Service,
 	bank *bank.Service,
+	link *link.Service,
 
 	playerStats *stats.PlayeStatsService,
 	gambleStats *stats.GamblingStatsService,
@@ -39,6 +60,39 @@ func RegisterClientCommands(
 
 	webhook *webhook.Webhook,
 ) {
+	reg.RegisterCommand(register.Command{
+		Name:     "link",
+		Aliases:  []string{"lnk", "lk", "linkdc"},
+		MinLevel: LevelUser,
+		MinArgs:  0,
+		Handler: func(clientNum uint8, playerID int, playerName, xuid string, level int, args []string) {
+			id, err := player.GetDiscordIDByID(playerID)
+			if err != nil {
+				rcon.Tell(clientNum, "^1Error ^7checking your account, try again later")
+				return
+			}
+
+			if id != "" {
+				rcon.Tell(clientNum, "You have ^6already linked ^7your account")
+				return
+			}
+
+			code, err := generateCode()
+			if err != nil {
+				rcon.Tell(clientNum, "^1Failed ^7to generate link code, ^6try again ^7later")
+				return
+			}
+
+			if err = link.CreateLink(playerID, code); err != nil {
+				rcon.Tell(clientNum, unknownErr)
+				return
+			}
+
+			rcon.Tell(clientNum, fmt.Sprintf("Your discord link code is: ^6%s", code))
+			rcon.Tell(clientNum, "use ^6/link <code> ^7in discord to link your account")
+		},
+	})
+
 	reg.RegisterCommand(register.Command{
 		Name:     "gamble",
 		Aliases:  []string{"g", "cf", "coinflip"},

@@ -1,18 +1,19 @@
 package queries
 
 const (
-	CreatePlayer     = `INSERT INTO players (name, xuid, guid, level, client_id, created_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP);`
+	CreatePlayer     = `INSERT INTO players (name, xuid, guid, level, client_id, discord_id, created_at) VALUES (?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP);`
 	DeletePlayerByID = `DELETE FROM players WHERE id = ?;`
 
-	GetPlayerByID   = `SELECT id, name, xuid, guid, level, client_id, created_at FROM players WHERE id = ?;`
-	GetPlayerByXUID = `SELECT id, name, xuid, guid, level, client_id, created_at FROM players WHERE xuid = ?;`
-	GetPlayerByGUID = `SELECT id, name, xuid, guid, level, client_id, created_at FROM players WHERE guid = ?;`
+	GetPlayerByID   = `SELECT id, name, xuid, guid, level, client_id, discord_id, created_at FROM players WHERE id = ?;`
+	GetPlayerByXUID = `SELECT id, name, xuid, guid, level, client_id, discord_id, created_at FROM players WHERE xuid = ?;`
+	GetPlayerByGUID = `SELECT id, name, xuid, guid, level, client_id, discord_id, created_at FROM players WHERE guid = ?;`
 
-	GetIDByXUID = `SELECT id FROM players WHERE xuid = ?;`
-	GetIDByGUID = `SELECT id FROM players WHERE guid = ?;`
+	GetDiscordIDByID   = `SELECT discord_id FROM players WHERE id = ?;`
+	GetDiscordIDByXUID = `SELECT discord_id FROM players WHERE xuid = ?;`
 
-	UpdatePlayerLevel = `UPDATE players SET level = ? WHERE id = ?;`
-	UpdatePlayerName  = `UPDATE players SET name = ? WHERE id = ?;`
+	UpdatePlayerDiscordID = `UPDATE players SET discord_id = ? WHERE id = ?;`
+	UpdatePlayerLevel     = `UPDATE players SET level = ? WHERE id = ?;`
+	UpdatePlayerName      = `UPDATE players SET name = ? WHERE id = ?;`
 
 	UserExistsByID   = `SELECT COUNT(1) FROM players WHERE id = ?;`
 	UserExistsByXUID = `SELECT COUNT(1) FROM players WHERE xuid = ?;`

@@ -22,6 +22,8 @@ type PlayerRepository interface {
 	GetByID(id int) (*Player, error)
 	GetByXUID(xuid string) (*Player, error)
 	GetByGUID(guid string) (*Player, error)
+	GetDiscordIDByID(id int) (string, error)
+	UpdateDiscordID(id int, discordID string) error
 	UpdateName(id int, name string) error
 	UpdateLevel(id int, level int) error
 	Delete(id int) error
@@ -88,6 +90,28 @@ func (r *repository) GetByGUID(guid string) (*Player, error) {
 		return nil, err
 	}
 	return &p, nil
+}
+
+func (r *repository) GetDiscordIDByID(id int) (string, error) {
+	var discorID string
+	err := r.db.QueryRow(queries.GetDiscordIDByID, id).Scan(&discorID)
+	if err != nil {
+		return "", err
+	}
+	return discorID, nil
+}
+func (r *repository) GetDiscordIDByXUID(xuid string) (string, error) {
+	var discorID string
+	err := r.db.QueryRow(queries.GetDiscordIDByID, xuid).Scan(&discorID)
+	if err != nil {
+		return "", err
+	}
+	return discorID, nil
+}
+
+func (r *repository) UpdateDiscordID(id int, discordID string) error {
+	_, err := r.db.Exec(queries.UpdatePlayerDiscordID, discordID, id)
+	return err
 }
 
 func (r *repository) UpdateName(id int, name string) error {

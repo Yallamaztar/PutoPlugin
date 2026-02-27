@@ -1,6 +1,7 @@
 package player
 
 import (
+	"errors"
 	"fmt"
 	"plugin/internal/config"
 	"plugin/internal/iw4m"
@@ -51,16 +52,31 @@ func (s *Service) GetPlayerByGUID(guid string) (*player.Player, error) {
 	return s.repo.GetByGUID(guid)
 }
 
+func (s *Service) GetDiscordIDByID(id int) (string, error) {
+	d, err := s.GetDiscordIDByID(id)
+	if err != nil || d == "" {
+		return "", errors.New("couldnt get players id")
+	}
+
+	return d, err
+}
+func (s *Service) UpdateDiscordID(id int, discordID string) error {
+	if discordID == "" {
+		return errors.New("discordID cannot be empty")
+	}
+	return s.repo.UpdateDiscordID(id, discordID)
+}
+
 func (s *Service) UpdateName(id int, name string) error {
 	if name == "" {
-		return fmt.Errorf("name cannot be empty")
+		return errors.New("name cannot be empty")
 	}
 	return s.repo.UpdateName(id, name)
 }
 
 func (s *Service) UpdateLevel(id int, level int) error {
 	if level < 0 {
-		return fmt.Errorf("level cannot be negative")
+		return errors.New("level cannot be negative")
 	}
 	return s.repo.UpdateLevel(id, level)
 }

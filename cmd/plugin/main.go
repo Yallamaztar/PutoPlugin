@@ -17,11 +17,13 @@ import (
 	"sync"
 
 	br "plugin/internal/repository/bank"
+	lr "plugin/internal/repository/link"
 	pr "plugin/internal/repository/player"
 	sr "plugin/internal/repository/stats"
 	wr "plugin/internal/repository/wallet"
 
 	bs "plugin/internal/service/bank"
+	ls "plugin/internal/service/link"
 	ps "plugin/internal/service/player"
 	ss "plugin/internal/service/stats"
 	ws "plugin/internal/service/wallet"
@@ -38,6 +40,7 @@ func ascii() {
 	cmd.Stderr = os.Stderr
 	_ = cmd.Run()
 
+	// hacker ascii art type shi
 	banner := []string{
 		"   ____  _       _        ____  _             _       ",
 		"  |  _ \\| |_   _| |_ ___ |  _ \\| |_   _  __ _(_)_ __  ",
@@ -80,9 +83,11 @@ func main() {
 		log.Fatal("Failed database migration")
 	}
 
+	// creating all repositories & services
 	player := ps.New(pr.New(db))
 	wallet := ws.New(wr.New(db))
 	bank := bs.New(br.New(db))
+	link := ls.New(lr.New(db))
 	playerStats := ss.NewPlayerStats(sr.NewPlayerStats(db))
 	gambleStats := ss.NewGamblingStats(sr.NewGamblingStats(db))
 	walletStats := ss.NewWalletStats(sr.NewWalletStats(db))
@@ -91,28 +96,31 @@ func main() {
 	var wh *webhook.Webhook
 	if cfg.Discord.Enabled {
 		if cfg.Discord.WebhookLink == "" {
-			log.Errorln("Your discord webhook link is empty, please create one and add it to the config")
+			log.Fatalf("Your discord webhook link is empty, please create one and add it to the config")
 		}
-
 		wh = webhook.New(cfg.Discord.WebhookLink)
 	}
 
 	// single IW4M-Admin wrapper instance cause the plugin only uses commands
 	// like: !setlevel, !ban, !unban which are "global" commands, so handling
-	// different server ids is pointless
+	// different server ids is pointless, atleast for now
 	var iw *iw4m.IW4MWrapper
 	if cfg.IW4MAdmin.Enabled {
+		println()
 		log.Println("Starting IW4M-Admin integration")
-		iw = iw4m.New(cfg)
+		iw = iw4m.New(cfg, log)
 
-		_, err := iw.Stats(2, 0)
+		err = iw.TestConnection()
 		if err != nil {
-			log.Fatalf("Couldnt connect to IW4M-Admin")
+			log.Fatalf(err.Error())
 		}
+
+		log.Printf("Successfully connected to IW4M-Admin (%s)\n", iw.Host)
 	}
 
 	var wg sync.WaitGroup
 	for i, s := range cfg.Server {
+		println()
 		serverLog := logger.New(cfg.Server[i].Host, fmt.Sprintf("pp_server_log_%d.log", i))
 
 		serverLog.Println("Creating RCON connection")
@@ -133,7 +141,7 @@ func main() {
 
 		serverLog.Println("Registering commands")
 		reg := register.New(*cfg, rc, player, serverLog)
-		commands.RegisterClientCommands(*cfg, rc, reg, player, wallet, bank, playerStats, gambleStats, walletStats, wh)
+		commands.RegisterClientCommands(*cfg, rc, reg, player, wallet, bank, link, playerStats, gambleStats, walletStats, wh)
 
 		wg.Add(1)
 		go func(rc *rcon.RCON, log *logger.Logger) {
@@ -145,5 +153,4 @@ func main() {
 	}
 
 	wg.Wait()
-
 }
