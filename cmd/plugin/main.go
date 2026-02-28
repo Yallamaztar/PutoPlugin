@@ -158,6 +158,7 @@ func main() {
 			serverLog.Infoln("Make sure you have the necessary GSC scripts in your server /storage/t6/scripts/ dir")
 			continue
 		}
+		rc.SetDvar("plutoplugin_prefix", cfg.Server[i].CommandPrefix)
 		serverLog.Println("Successfully verified GSC connection")
 
 		serverLog.Println("Registering commands")
