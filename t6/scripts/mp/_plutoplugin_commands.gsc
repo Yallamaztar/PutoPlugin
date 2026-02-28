@@ -15,7 +15,7 @@ RegisterCommands() {
 
     // Client commands
     RegisterCommand("swap",         2, ::swap);
-    RegisterCommand("epilepsy",     2  ::epilepsy);
+    RegisterCommand("epilepsy",     2,  ::epilepsy);
     RegisterCommand("killplayer",   2, ::killplayer);
     RegisterCommand("hideplayer",   2, ::hideplayer);
     RegisterCommand("teleport",     2, ::teleport);
@@ -72,6 +72,15 @@ ExecCommand(command) {
     }
     
     thread [[def.handler]](args);
+}
+
+FindRegisteredCommand(name) {
+    for (i = 0; i < level._commands.size; i++) {
+        if (level._commands[i].name == name) {
+            return level._commands[i];
+        }
+    }
+    return undefined;
 }
 
 findPlayerByClientNum(n) {
@@ -411,7 +420,7 @@ setgravity(args) {
 
     origin IPrintLnBold("Set ^6" + target.name + "^7 gravity to: ^6" + gravity);
     if origin.guid != target.guid {
-        target IPrintLnBold("^6" + origin.name + "^7 set your gravity to: ^6" + gravity):
+        target IPrintLnBold("^6" + origin.name + "^7 set your gravity to: ^6" + gravity);
     }
 }
 

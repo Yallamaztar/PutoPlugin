@@ -5,19 +5,19 @@ init() {
     level._dvars.outDvar = "plutoplugin_out";
     level._dvars.reset   = "";
 
-    level._commands = [];
-    level._command_prefix  = ;
-
     scripts\mp\_plutoplugin_utils::SetDvarIfUnitialized(level._dvars.enabled, 1);
     scripts\mp\_plutoplugin_utils::SetDvarIfUnitialized(level._dvars.inDvar,  "");
     scripts\mp\_plutoplugin_utils::SetDvarIfUnitialized(level._dvars.outDvar, "");
+
+    level._commands = [];
+    level thread inDvarListener();
 }
 
 inDvarListener() {
     level endon("game_ended");
     for(;;) {
         if (GetDvarInt(level._dvars.enabled) != 1) {
-            wait 0.5;
+            wait 0.1;
             continue;
         }
 

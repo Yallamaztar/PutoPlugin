@@ -14,7 +14,7 @@ GetDvarDefault(dvar, def) {
 }
 
 isValidAndAlive(target) {
-    return !isDefined(target) || IsAlive(target);
+    return IsDefined(target) || IsAlive(target);
 }
 
 IsEnabled() {
