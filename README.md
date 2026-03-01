@@ -1,8 +1,10 @@
 # PlutoPlugin (WIP)
 
-#### PlutoPlugin is a modular server management and plugin framework for Call of Duty: Black Ops II [(Plutonium T6)](https://plutonium.pw/)
+![plutoplugin](.github/banner.png)
 
-It aims to provide a flexible foundation for economy systems, administrative tools, and third-party integrations, including Discord and **[IW4M-Admin](https://github.com/RaidMax/IW4M-Admin)**
+a modular server management and plugin framework for **Call of Duty: Black Ops II [(Plutonium T6)](https://plutonium.pw/)**
+It aims to provide a flexible foundation for economy systems, administrative tools, and third-party **integrations, including Discord and [IW4M-Admin](https://github.com/RaidMax/IW4M-Admin)**
+
 
 | This project is work in progress
 
@@ -43,7 +45,9 @@ It aims to provide a flexible foundation for economy systems, administrative too
     go build -ldflags="-s -w -buildid=" -trimpath cmd\plugin\main.go
     ```
 
-3. **Run the plugin**
+3. **Place the GSC scripts in the your scripts/ dir**
+
+4. **Run the plugin**
     ```shell
     main.exe
     ```
